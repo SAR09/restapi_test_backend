@@ -1,9 +1,15 @@
 package saifular.testcase.backend.controller;
 
 import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import saifular.testcase.backend.ExceptionHandler.EmailAlreadyExistsException;
+import saifular.testcase.backend.ExceptionHandler.UserNotFoundException;
+import saifular.testcase.backend.ExceptionHandler.UsernameAlreadyExistsException;
 import saifular.testcase.backend.dto.UserDto;
 import saifular.testcase.backend.dto.UserResponseDto;
 import saifular.testcase.backend.entity.User;
@@ -16,6 +22,8 @@ import java.util.stream.Collectors;
 @RequestMapping("/users")
 public class UserController {
 
+    private static final Logger log = LoggerFactory.getLogger(UserController.class);
+
     @Autowired
     private UserService userService;
 
@@ -24,7 +32,16 @@ public class UserController {
         try {
             User newUser = userService.createUser(userDto);
             return ResponseEntity.ok(newUser);
-        }catch (IllegalArgumentException exception){
+        }
+        catch (UsernameAlreadyExistsException exception){
+            log.error("Username already exists : {}", userDto.getUsername());// Tambahkan log
+            throw exception;
+        }
+        catch (EmailAlreadyExistsException exception){
+            log.error("Email already exists : {}", userDto.getEmail());// Tambahkan log
+            throw exception;
+        }
+        catch (IllegalArgumentException exception){
             return ResponseEntity.badRequest().body(exception.getMessage());
         }
     }
@@ -60,8 +77,17 @@ public class UserController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteUser(@PathVariable Long id){
-        userService.deleteUser(id);
-        return ResponseEntity.ok("User sukses dihapus");
+        try {
+            userService.deleteUser(id);
+            return ResponseEntity.ok("User sukses dihapus");
+        }
+        catch (UserNotFoundException exception){
+            log.error("User not found with id : " + id );
+            throw exception;
+        }
+        catch (IllegalArgumentException exception){
+            return ResponseEntity.badRequest().body(exception.getMessage());
+        }
     }
 
 }

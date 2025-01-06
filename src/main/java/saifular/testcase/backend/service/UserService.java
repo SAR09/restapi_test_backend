@@ -1,8 +1,14 @@
 package saifular.testcase.backend.service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import saifular.testcase.backend.ExceptionHandler.EmailAlreadyExistsException;
+import saifular.testcase.backend.ExceptionHandler.UserNotFoundException;
+import saifular.testcase.backend.ExceptionHandler.UsernameAlreadyExistsException;
 import saifular.testcase.backend.dto.UserDto;
 import saifular.testcase.backend.dto.UserResponseDto;
 import saifular.testcase.backend.entity.User;
@@ -13,6 +19,8 @@ import java.util.List;
 @Service
 public class UserService {
 
+    private static final Logger log = LoggerFactory.getLogger(UserService.class);
+
     @Autowired
     private UserRepository userRepository;
 
@@ -20,11 +28,12 @@ public class UserService {
     private BCryptPasswordEncoder passwordEncoder;
 
     public User createUser(UserDto userDto){
+        log.info("Debugging started...");
         if (userRepository.existsByUsername(userDto.getUsername())){
-            throw new RuntimeException("Username sudah terdaftar");
+            throw new UsernameAlreadyExistsException("Username sudah terdaftar");
         }
         if (userRepository.existsByEmail(userDto.getEmail())){
-            throw new RuntimeException("Email sudah terdaftar");
+            throw new EmailAlreadyExistsException("Email sudah terdaftar");
         }
 
         User user = new User();
@@ -60,6 +69,8 @@ public class UserService {
     }
 
     public void deleteUser(Long id){
+        userRepository.findById(id)
+                .orElseThrow(() -> new UserNotFoundException("User with id " + id + " not found"));
         userRepository.deleteById(id);
     }
 
