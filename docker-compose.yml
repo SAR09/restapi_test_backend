@@ -1,0 +1,39 @@
+  version: '3.8'
+  services:
+    app:
+      container_name: app-container
+      build:
+        context: .
+        dockerfile: Dockerfile
+      image: saiful/api_app:1.0
+      ports:
+        - "8080:8080"
+      environment:
+        SPRING_DATASOURCE_URL: jdbc:mysql://mysql-container:3306/testcase_db
+        SPRING_DATASOURCE_USERNAME: root
+        SPRING_DATASOURCE_PASSWORD: Mysqlsaiful09
+
+      depends_on:
+        - db
+      networks:
+        - app_network
+
+    db:
+      image: mysql:8.0
+      container_name: mysql-container
+      environment:
+        MYSQL_ROOT_PASSWORD: Mysqlsaiful09
+        MYSQL_DATABASE: testcase_db
+      volumes:
+        - db_data:/var/lib/mysql
+      ports:
+        - "3307:3306"
+      networks:
+        - app_network
+
+  volumes:
+    db_data:
+
+  networks:
+    app_network:
+      driver: bridge
